@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User Registration Form</title>
+</head>
+
+<body>
+
+    <h2>User Registration</h2>
+    <form id="registrationForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" ><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Get form values
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+
+            // Create an object with the data
+            let data = {
+                email: email,
+                password: password
+            };
+
+            // Send a POST request to your backend API (assuming you have an endpoint to handle this)
+            fetch('http://localhost:3000/UserLogin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('User registered successfully!');
+                        alert('users Login Sucessfully');
+                        // You can perform additional actions here after successful registration
+                    } else {
+                        console.error('Registration failed.');
+                        alert('give the proper details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // alert('give the proper details');
+                });
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home | TODOS</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js" integrity="sha512-b94Z6431JyXY14iSXwgzeZurHHRNkLt9d6bAHt7BZT38eqV+GyngIi/tVye4jBKPYQ2lBdRs0glww4fmpuLRwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+  <h2 style="text-align: center">create Task</h2>
+
+  <form onsubmit="createTask()">
+    <input type="text" name="task" id="Usertask" autofocus placeholder="Add your task" /><br>
+    <textarea name="Description" id="desc" cols="50" rows="3" placeholder="Enter your Description"></textarea><br>
+    <input type="submit" value="Add Task"/>
+  </form>
+
+  <br/>
+  <table width="100%" border="1" style="text-align: center">
+    <thead>
+      <tr>
+        <th>SNO</th>
+        <th>Task Name</th>
+        <th>Description</th>
+        <th>Created Date</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody id="tbl-body">
+      <!-- <tr>
+                <td>1</td>
+                <td>Warm up</td>
+                <td>summa</td>
+                <td>Pending</td>
+                <td>summa</td>
+                <td><button type="button">Completed</button></td>
+            </tr> -->
+    </tbody>
+  </table>
+
+  <script>
+    // Send a POST request to your backend API (assuming you have an endpoint to handle this)
+    const url = "http://localhost:3000/tasks";
+
+    function createTask() {
+      event.preventDefault();
+      let taskName = document.getElementById("Usertask").value;
+      let Description = document.getElementById('desc').value;
+      // let completedDate = 'nil';
+      const postData = {
+        taskname: taskName,
+        description : Description
+      };
+
+      axios.post(url, postData).then((res) => {
+        alert("Task Created SuccessFully");
+        console.log(res.data); // 2
+      });
+      showTask();
+    }
+
+    function showTask() { 
+      axios.get(url).then((res) => {
+        let Tasks = res.data;
+        console.log(" showtask get method:",Tasks);
+        let content = "";
+        let i = 0;
+        for (let task of Tasks) {
+          i++;
+          let btn = `<button type="button" style="cursor:pointer;" onclick = "updateTask(${task.id})">Completed</button>`;
+          if (task.Status == "COMPLETED") {
+            btn = "";
+          }
+          content += `<tr><td>${i}</td><td>${task.title}</td><td>${task.description}</td><td>${task.formatted_created_at}</td><td>${task.status}</td><td>${btn}</td></tr>`;
+        }
+        document.querySelector("#tbl-body").innerHTML = content;
+      });
+    }
+
+    // below the code for udpate the task
+    function updateTask(id) {
+      const url = `http://localhost:3000/tasks/${id}`;
+      // const updateUrl = url + "/" + id; //  "http://localhost:3000/tasks/1"
+      const postData = {
+        status: 'COMPLETED'
+      };
+      axios.patch(url, postData).then((res) => {
+        console.log(res.data);
+        alert("Task is Completed");
+        location.reload();
+      });
+    }
+   showTask();
+  </script>
+</body>
+
+</html>
