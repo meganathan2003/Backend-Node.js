@@ -12,8 +12,8 @@
   <h2 style="text-align: center">create Task</h2>
 
   <form onsubmit="createTask()">
-    <input type="text" name="task" id="Usertask" autofocus placeholder="Add your task" /><br>
-    <textarea name="Description" id="desc" cols="50" rows="3" placeholder="Enter your Description"></textarea><br>
+    <input type="text" name="task" id="Usertask" autofocus placeholder="Add your task"  required/><br>
+    <textarea name="Description" id="desc" cols="50" rows="3" placeholder="Enter your Description" required></textarea><br>
     <input type="submit" value="Add Task"/>
   </form>
 
@@ -52,7 +52,7 @@
       let Description = document.getElementById('desc').value;
       // let completedDate = 'nil';
       const postData = {
-        taskname: taskName,
+        title: taskName,
         description : Description
       };
 
@@ -65,14 +65,14 @@
 
     function showTask() { 
       axios.get(url).then((res) => {
-        let Tasks = res.data;
-        console.log(" showtask get method:",Tasks);
+        let Tasks = res.data; // 
+        console.log("showtask get method:",Tasks);
         let content = "";
         let i = 0;
         for (let task of Tasks) {
           i++;
-          let btn = `<button type="button" style="cursor:pointer;" onclick = "updateTask(${task.id})">Completed</button>`;
-          if (task.Status == "COMPLETED") {
+          let btn = `<button type="button" style="cursor:pointer;" onclick ="updateTask(${task.id})">Completed</button>`;
+          if (task.status == 'COMPLETED') {
             btn = "";
           }
           content += `<tr><td>${i}</td><td>${task.title}</td><td>${task.description}</td><td>${task.formatted_created_at}</td><td>${task.status}</td><td>${btn}</td></tr>`;
@@ -80,7 +80,6 @@
         document.querySelector("#tbl-body").innerHTML = content;
       });
     }
-
     // below the code for udpate the task
     function updateTask(id) {
       const url = `http://localhost:3000/tasks/${id}`;
@@ -88,6 +87,7 @@
       const postData = {
         status: 'COMPLETED'
       };
+      // Below the code for patch the data 
       axios.patch(url, postData).then((res) => {
         console.log(res.data);
         alert("Task is Completed");

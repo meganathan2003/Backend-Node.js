@@ -13,6 +13,8 @@ const mysql = require('mysql');
 const userSchema = require('../validation/loginValidation');
 require('dotenv').config({path: '../env/.env' });
 
+
+// Create the DB connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -30,17 +32,46 @@ db.connect((error) => {
 const port = process.env.PORT || 3000;
 
 http.createServer((req, response) => {
-
     // CORS headers to allow requests from different origins
     response.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
     response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
     response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
+  
   // Below the code server send the option method so we write this code
   if (req.method === 'OPTIONS') {
       response.writeHead(200);
       response.end();
   } 
+
+   // Below the code for patch method from the task
+   else if(req.method === 'PATCH' && req.url.startsWith('/tasks/')){
+    console.log(req.method + " " + req.url);
+    const parts = req.url.split('/');
+    const taskid = parts[2];
+    console.log(taskid);
+    let body = '';
+    req.on('data',(chunk) =>{
+      body += chunk.toString();
+    });
+    console.log(body);
+    req.on('end',()=>{
+      const patchData = JSON.parse(body);
+      const {status} = patchData;  
+
+      const sql = 'UPDATE tasks SET status = ? WHERE id = ?';
+      db.query(sql,[status,taskid],(err,result)=>{
+        if(err){
+          response.writeHead(400,{'Content-Type': 'text/plain'});
+          response.end('Error while Updating the Task data');
+          console.error(err);
+          return;
+        }
+        response.writeHead(200,{'Content-Type': 'application/json'});
+        response.end(JSON.stringify(result));
+        console.log('Update data success');
+      });
+    });
+  }
   
   // Below the code for handle the post method and user endpoint
   else if (req.method === 'POST' && req.url === '/UserLogin') {
@@ -88,15 +119,16 @@ http.createServer((req, response) => {
       body += chunk.toString();
     });
 
+    console.log(body);
     req.on('end', () =>{
       const data = JSON.parse(body);
-      const {taskname,description} = data;
+      const {title,description} = data;
     
       // Below the code for insert the tasks into DB
       const sql =  'INSERT INTO tasks (title,description) VALUES (?,?)';
-      db.query(sql,[taskname,description],(err,result)=>{
+      db.query(sql,[title,description],(err,result)=>{
         if(err){
-          response.writeHead(400,{'Content-Type': 'text/plain'});
+          response.writeHead(404,{'Content-Type': 'text/plain'});
           response.end('Error while Storing the Task data');
           console.error(err);
           return;
@@ -109,7 +141,7 @@ http.createServer((req, response) => {
   }
 
   // Below the code for get request from the task
-  else if(( req.method === 'GET' && req.url.startsWith('/tasks') ) || req.url.startsWith('/') ){
+  else if(req.method === 'GET' && req.url.startsWith('/tasks')){
     console.log(req.url + " " +  req.method);
     const sql = `SELECT id,title, description,status, DATE_FORMAT(created_at,'%d, %M, %Y %r') AS formatted_created_at FROM tasks;`;
     db.query(sql,(err,result)=>{
@@ -119,38 +151,12 @@ http.createServer((req, response) => {
         console.error(err);
         return;
       }
+      console.log(result);
       response.writeHead(200,{'Content-Type': 'application/json'});
       response.end(JSON.stringify(result)); // "[{}]"
-      console.log('retrive data success');
+      console.log(JSON.stringify(result));
+      console.log('retrive data success');  
 
-    })
-  }
-  // Below the code for patch method from the task
-  else if(req.method === 'PATCH' && req.url.startsWith(`/tasks`)){
-    console.log(req.method + " " + req.url);
-    const parts = req.url.split('/');
-    const taskid = parts[2];
-    let body = '';
-    req.on('data',(chunk) =>{
-      body += chunk.toString();
-    });
-    console.log(body);
-    req.on('end',()=>{
-      const patchData = JSON.parse(body);
-      const {status} = patchData;  
-
-      const sql = 'UPDATE tasks SET status = ? WHERE id = ?';
-      db.query(sql,[status,taskid],(err,result)=>{
-        if(err){
-          response.writeHead(400,{'Content-Type': 'text/plain'});
-          response.end('Error while Updating the Task data');
-          console.error(err);
-          return;
-        }
-        response.writeHead(200,{'Content-Type': 'application/json'});
-        response.end(JSON.stringify(result));
-        console.log('retrive data success');
-      });
     });
   }else {
     response.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -160,13 +166,3 @@ http.createServer((req, response) => {
   console.log(`Server running at http://localhost:${port}/`);
 });
 
-// setTimeout(() => {
-//   // Close the database connection
-//   db.end((err) => {
-//     if (err) {
-//       console.log('Error while closing the DB', err);
-//       return;
-//     }
-//     console.log('DB Connection Closed');
-//   });
-// },60000);
